@@ -46,7 +46,7 @@ import Fluent
  ````
  
  */
-public class BaseRepository<T, D>: FluentRepository where T: Model, D: Database {
+open class BaseRepository<T, D>: FluentRepository where T: Model, D: Database {
     
     /// The database model to interface with.
     /// - seealso: `Repository` protocol.
