@@ -20,7 +20,7 @@ public protocol FluentRepository {
     /// The connection pool, used for connections to the database layer.
     var db: DB.ConnectionPool { get }
     
-    init(_ db: DatabaseConnectionPool<ConfiguredDatabase<DB>>)
+    //init(_ db: DatabaseConnectionPool<ConfiguredDatabase<DB>>)
     
     func all() -> Future<[DBModel]>
     func find(id: DBModel.ID) -> Future<DBModel?>
