@@ -47,8 +47,11 @@ final class FluentRepositoryTests: VaporTestCase {
             let id = try savedUser.requireID()
             let repo = try app.make(UserRepository.self)
             
-            let fetched = try repo.find(id: id).wait()
-            XCTAssertEqual(fetched!.id!, id)
+            let fetched2 = try repo.find(id: id).wait()
+            let fetched = try app.getResponse(to: "/user/\(id)", decodeTo: User.self)
+            XCTAssertEqual(fetched.id!, id)
+            XCTAssertEqual(fetched2!.id!, id)
+
         }
     }
     

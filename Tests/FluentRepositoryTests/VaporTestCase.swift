@@ -48,41 +48,9 @@ final class SQLiteUserRepository: SQLiteBaseRepository<User, UserRepository> { }
 
 extension SQLiteUserRepository: UserRepository { }
 
+final class UserController: BasicRepositoryController<SQLiteUserRepository> { }
 
-final class UserController: RouteCollection {
-    
-    let repository: UserRepository
-    
-    init(_ repository: UserRepository) {
-        self.repository = repository
-    }
-    
-    func all(_ req: Request) throws -> Future<[User]> {
-        return repository.all()
-    }
-    
-    func find(_ req: Request) throws -> Future<User> {
-        return try req.parameters.next(User.self)
-    }
-    
-    func save(_ req: Request, user: User) throws -> Future<User> {
-        return repository.save(user)
-    }
-    
-    func delete(_ req: Request) throws -> Future<HTTPStatus> {
-        return try req.parameters.next(User.self).flatMap { user in
-            return try self.repository.delete(id: user.requireID())
-                .transform(to: .ok)
-        }
-    }
-    
-    func boot(router: Router) throws {
-        router.get("user", use: all)
-        router.get("user", User.parameter, use: find)
-        router.post(User.self, at: "user", use: save)
-        router.delete("user", User.parameter, use: delete)
-    }
-}
+extension UserController: RouteCollection { }
 
 
 class VaporTestCase: XCTestCase, VaporTestable {
@@ -134,8 +102,8 @@ class VaporTestCase: XCTestCase, VaporTestable {
     }
     
     func routes(_ router: Router, _ container: Container) throws {
-        let repo = try container.make(UserRepository.self)
-        try router.register(collection: UserController(repo))
+        //let repo = try container.make(UserRepository.self)
+        try router.register(collection: try UserController("/user", on: container))
     }
 
 }
