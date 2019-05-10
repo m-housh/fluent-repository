@@ -27,7 +27,7 @@ public protocol RepositoryRouteController {
 
 extension RepositoryRouteController where Self: RouteCollection, Repository.DBModel: Parameter, Repository.DBModel: RequestDecodable {
     
-    func boot(router: Router) {
+    public func boot(router: Router) {
         router.get(path, use: all)
         router.post(Repository.DBModel.self, at: path, use: save)
         router.get(path, Repository.DBModel.parameter, use: find)
@@ -45,7 +45,7 @@ public class BasicRepositoryController<R>: RepositoryRouteController where R: Fl
     public let repository: R
     public let path: String
     
-    public required init(_ path: String, on worker: Container) throws {
+    public required init(_ path: String = "/", on worker: Container) throws {
         self.path = path
         self.repository = try worker.make(R.self)
     }
