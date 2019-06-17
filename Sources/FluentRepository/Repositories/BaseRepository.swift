@@ -56,10 +56,12 @@ open class BaseRepository<T, D>: FluentRepository where T: Model, D: Database {
     /// The database connection pool.
     /// - seealso: `Repository` protocol.
     public let db: D.ConnectionPool
-        
+    public let pageConfig: RepositoryPaginationConfig
+    
     /// - parameter db: The database connection.
     /// - seealso: `Repository` protocol.
-    public required init<C>(_ db: C) where C: DatabaseConnectionPool<ConfiguredDatabase<D>> {
+    public required init<C>(_ db: C, pageConfig: RepositoryPaginationConfig) where C: DatabaseConnectionPool<ConfiguredDatabase<D>> {
         self.db = db
+        self.pageConfig = pageConfig
     }
 }

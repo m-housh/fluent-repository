@@ -8,20 +8,37 @@
 import Vapor
 
 
+/**
+ # RepositoryRouteController
+ ------
+ 
+ Handles api routes using a `FluentRepository`.
+ 
+*/
 public protocol RepositoryRouteController {
     
+    /// The `FluentRepository` type used for database queries.
     associatedtype Repository: FluentRepository
+    
+    /// The return type, this is typically the database model.
     associatedtype ReturnType: Content
     
+    /// The concrete `FluentRepository`.
     var repository: Repository { get }
+    
+    /// A path to register the api routes.
     var path: String { get }
     
+    /// Get all the database models.
     func all(_ request: Request) throws -> Future<[ReturnType]>
     
+    /// Get a database model by `id`.
     func find(_ request: Request) throws -> Future<ReturnType>
     
+    /// Create or Update a database model.
     func save(_ request: Request, model: Repository.DBModel) throws -> Future<ReturnType>
     
+    /// Delete a database model.
     func delete(_ request: Request) throws -> Future<HTTPStatus>
 }
 
@@ -51,7 +68,14 @@ public class BasicRepositoryController<R>: RepositoryRouteController where R: Fl
     }
     
     public func all(_ request: Request) throws -> EventLoopFuture<[ReturnType]> {
-        return repository.all()
+        
+        let pageQuery = try request.query.decode(DefaultPaginationQuery.self)
+        
+        guard let page = pageQuery.page else {
+            return repository.all()
+        }
+        
+        return repository.all(page: page)
     }
     
     public func save(_ request: Request, model: Repository.DBModel) throws -> EventLoopFuture<ReturnType> {
@@ -71,3 +95,4 @@ public class BasicRepositoryController<R>: RepositoryRouteController where R: Fl
 }
 
 extension BasicRepositoryController: Service where R: Service { }
+

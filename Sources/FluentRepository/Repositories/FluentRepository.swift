@@ -19,10 +19,12 @@ public protocol FluentRepository {
     
     /// The connection pool, used for connections to the database layer.
     var db: DB.ConnectionPool { get }
+    var pageConfig: RepositoryPaginationConfig { get }
     
     //init(_ db: DatabaseConnectionPool<ConfiguredDatabase<DB>>)
     
     func all() -> Future<[DBModel]>
+    func all(page: Int) -> Future<[DBModel]>
     func find(id: DBModel.ID) -> Future<DBModel?>
     func save(_ entity: DBModel) -> Future<DBModel>
     func delete(id: DBModel.ID) -> Future<Void>
@@ -35,6 +37,15 @@ extension FluentRepository where DBModel.Database: QuerySupporting {
     public func all() -> Future<[DBModel]> {
         return db.withConnection { conn in
             return DBModel.query(on: conn).all()
+        }
+    }
+    
+    /// The default implementation, retrieves a models by page.
+    public func all(page: Int) -> Future<[DBModel]> {
+        return db.withConnection { conn in
+            return DBModel.query(on: conn)
+                .range(self.pageConfig.range(for: page))
+                .all()
         }
     }
     

@@ -84,6 +84,40 @@ final class FluentRepositoryTests: VaporTestCase {
             
         }
     }
+    
+    func testPagination() {
+        let users = [
+            User(name: "One"),
+            User(name: "Two"),
+            User(name: "Three")
+        ]
+        
+        perform {
+        
+            _ = try users.map { user in
+                return try app.getResponse(
+                    to: "user",
+                    method: .POST,
+                    data: user,
+                    decodeTo: User.self
+                )
+            }
+            
+            let query = DefaultPaginationQuery(page: 1)
+            
+            let fetched = try app.getResponse(to: "user", query: query, decodeTo: [User].self)
+            
+            XCTAssertEqual(fetched.count, 2)
+            
+        }
+    }
+    
+    func testDefaultPaginationConfig() {
+        perform {
+            let config = try app.make(DefaultPaginationConfig.self)
+            XCTAssertEqual(config.pageLimit, 25)
+        }
+    }
 
     static var allTests = [
         ("testSanity", testSanity),
@@ -91,5 +125,7 @@ final class FluentRepositoryTests: VaporTestCase {
         ("testGetAll", testGetAll),
         ("testGetOne", testGetOne),
         ("testDelete", testDelete),
+        ("testDeleteThrows", testDeleteThrows),
+        ("testPagination", testPagination),
     ]
 }

@@ -27,7 +27,12 @@ class SQLiteBaseRepository<M, R>: BaseRepository<M, SQLiteDatabase> where M: Mod
 extension SQLiteBaseRepository: ServiceType {
     
     static func makeService(for container: Container) throws -> Self {
-        return .init(try container.connectionPool(to: .sqlite))
+        let pageConfig = try container.make(RepositoryPaginationConfig.self)
+        
+        return .init(
+            try container.connectionPool(to: .sqlite),
+            pageConfig: pageConfig
+        )
     }
     
     static var serviceSupports: [Any.Type] {
@@ -53,6 +58,17 @@ final class UserController: BasicRepositoryController<SQLiteUserRepository> { }
 extension UserController: RouteCollection { }
 
 
+struct TestPaginationConfig: RepositoryPaginationConfig {
+    var pageLimit: Int = 1
+}
+
+extension TestPaginationConfig: ServiceType {
+    
+    static func makeService(for container: Container) throws -> TestPaginationConfig {
+        return TestPaginationConfig()
+    }
+}
+
 class VaporTestCase: XCTestCase, VaporTestable {
     
     var app: Application!
@@ -73,9 +89,12 @@ class VaporTestCase: XCTestCase, VaporTestable {
         
         /// Register providers first.
         try services.register(FluentSQLiteProvider())
+        try services.register(FluentRepositoryProvider())
         
         services.register(SQLiteUserRepository.self)
         config.prefer(SQLiteUserRepository.self, for: UserRepository.self)
+        
+        services.register(TestPaginationConfig.self)
         
         services.register(Router.self) { container -> EngineRouter in
             let router = EngineRouter.default()
@@ -99,6 +118,8 @@ class VaporTestCase: XCTestCase, VaporTestable {
         var migrations = MigrationConfig()
         migrations.add(model: User.self, database: .sqlite)
         services.register(migrations)
+        
+        config.prefer(TestPaginationConfig.self, for: RepositoryPaginationConfig.self)
     }
     
     func routes(_ router: Router, _ container: Container) throws {
