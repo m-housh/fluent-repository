@@ -14,7 +14,12 @@ public final class DefaultPaginationConfig: RepositoryPaginationConfig {
     /// - seealso: `RepositoryPaginationConfig`
     public let pageLimit: Int
     
-    public init(pageLimit: Int = 25) {
+    public init(pageLimit: Int = 25) throws {
+        
+        guard pageLimit > 0 else {
+            throw PaginationError.invalidPageLimit
+        }
+        
         self.pageLimit = pageLimit
     }
 }
@@ -23,6 +28,6 @@ public final class DefaultPaginationConfig: RepositoryPaginationConfig {
 extension DefaultPaginationConfig: ServiceType {
     
     public static func makeService(for container: Container) throws -> DefaultPaginationConfig {
-        return DefaultPaginationConfig()
+        return try DefaultPaginationConfig()
     }
 }

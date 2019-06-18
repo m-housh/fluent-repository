@@ -1,5 +1,6 @@
 import XCTest
 import Vapor
+import FluentSQLite
 @testable import FluentRepository
 
 final class FluentRepositoryTests: VaporTestCase {
@@ -104,10 +105,13 @@ final class FluentRepositoryTests: VaporTestCase {
             }
             
             let query = DefaultPaginationQuery(page: 1)
-            
             let fetched = try app.getResponse(to: "user", query: query, decodeTo: [User].self)
-            
             XCTAssertEqual(fetched.count, 2)
+            
+            let query2 = DefaultPaginationQuery(page: 2)
+            let fetched2 = try app.getResponse(to: "user", query: query2, decodeTo: [User].self)
+            XCTAssertEqual(fetched2.count, 1)
+
             
         }
     }
@@ -116,6 +120,40 @@ final class FluentRepositoryTests: VaporTestCase {
         perform {
             let config = try app.make(DefaultPaginationConfig.self)
             XCTAssertEqual(config.pageLimit, 25)
+        }
+    }
+    
+    func testInvalidPageThrowsError() {
+        perform {
+            let query = DefaultPaginationQuery(page: 0)
+            
+            let resp = try app.sendRequest(
+                to: "user",
+                method: .GET,
+                headers: .init(),
+                query: query
+            )
+            
+            XCTAssertEqual(resp.http.status.code, 500)
+            
+        }
+    }
+    
+    func testPageLimitThrowsError() {
+        XCTAssertThrowsError(try DefaultPaginationConfig(pageLimit: 0))
+    }
+    
+    func testWithConnection() {
+        perform {
+            let user = try app.getResponse(to: "user", method: .POST, data: User(name: "foo"), decodeTo: User.self)
+            
+            let repo = try app.make(UserRepository.self)
+            
+            let found = try repo.withConnection { conn in
+                return User.query(on: conn).filter(\.name == "foo").first()
+            }.wait()
+            
+            XCTAssertEqual(user.id!, found!.id!)
         }
     }
 
@@ -127,5 +165,9 @@ final class FluentRepositoryTests: VaporTestCase {
         ("testDelete", testDelete),
         ("testDeleteThrows", testDeleteThrows),
         ("testPagination", testPagination),
+        ("testDefaultPaginationConfig", testDefaultPaginationConfig),
+        ("testInvalidPageThrowsError", testInvalidPageThrowsError),
+        ("testPageLimitThrowsError", testPageLimitThrowsError),
+        ("testWithConnection", testWithConnection),
     ]
 }

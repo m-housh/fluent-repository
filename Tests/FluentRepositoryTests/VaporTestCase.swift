@@ -12,6 +12,8 @@ import VaporTestable
 
 @testable import FluentRepository
 
+
+/// A fluent model for our tests.
 struct User: SQLiteModel, Migration, Parameter, Content {
     var id: Int?
     var name: String
@@ -22,17 +24,15 @@ struct User: SQLiteModel, Migration, Parameter, Content {
     }
 }
 
-class SQLiteBaseRepository<M, R>: BaseRepository<M, SQLiteDatabase> where M: Model, M.Database == SQLiteDatabase { }
+/// A concrete base repository class for sqlite.
+class SQLiteBaseRepository<M, R>: Repository<M> where M: Model, M.Database == SQLiteDatabase { }
 
 extension SQLiteBaseRepository: ServiceType {
     
     static func makeService(for container: Container) throws -> Self {
-        let pageConfig = try container.make(RepositoryPaginationConfig.self)
+        let db = try container.connectionPool(to: .sqlite)
+        return try .init(db, on: container)
         
-        return .init(
-            try container.connectionPool(to: .sqlite),
-            pageConfig: pageConfig
-        )
     }
     
     static var serviceSupports: [Any.Type] {
@@ -41,25 +41,31 @@ extension SQLiteBaseRepository: ServiceType {
 }
 
 
+// Representation of a `User` repository for our tests.
 protocol UserRepository {
     
     func all() -> Future<[User]>
     func find(id: Int) -> Future<User?>
     func save(_ user: User) -> Future<User>
     func delete(id: Int) -> Future<Void>
+    /// optional
+    func withConnection<T>(_ closure: @escaping (User.Database.Connection) throws -> Future<T>) -> Future<T>
 }
 
+/// Concrete sqlite version of a `UserRepository`.
 final class SQLiteUserRepository: SQLiteBaseRepository<User, UserRepository> { }
 
 extension SQLiteUserRepository: UserRepository { }
 
-final class UserController: BasicRepositoryController<SQLiteUserRepository> { }
+
+/// An api route controller for our `UserRepository`.
+final class UserController: RepositoryController<SQLiteUserRepository> { }
 
 extension UserController: RouteCollection { }
 
-
+/// Pagination configuration for our tests.
 struct TestPaginationConfig: RepositoryPaginationConfig {
-    var pageLimit: Int = 1
+    var pageLimit: Int = 2
 }
 
 extension TestPaginationConfig: ServiceType {
@@ -69,6 +75,8 @@ extension TestPaginationConfig: ServiceType {
     }
 }
 
+/// Our base test case.  Sets up a vapor application that
+/// can be used for our tests.
 class VaporTestCase: XCTestCase, VaporTestable {
     
     var app: Application!

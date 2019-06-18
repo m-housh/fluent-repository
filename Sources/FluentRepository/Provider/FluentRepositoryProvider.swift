@@ -12,20 +12,21 @@ import Vapor
  # FluentRepositoryProvider
  ---------
  
- Registers services to the vapor application.
+ Registers `FluentRepository` services to the vapor application.
  
 */
 public final class FluentRepositoryProvider: Provider {
     
     public init() { }
     
+    /// - seealso: `Provider`
     public func register(_ services: inout Services) throws {
         services.register(DefaultPaginationConfig.self)
     }
     
+    /// - seealso: `Provider`
     public func didBoot(_ container: Container) throws -> EventLoopFuture<Void> {
         return .done(on: container)
     }
-    
-    
+
 }

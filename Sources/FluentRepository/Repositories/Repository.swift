@@ -46,22 +46,23 @@ import Fluent
  ````
  
  */
-open class BaseRepository<T, D>: FluentRepository where T: Model, D: Database {
+open class Repository<T>: FluentRepository where T: Model {
     
     /// The database model to interface with.
-    /// - seealso: `Repository` protocol.
+    /// - seealso: `FluentRepository` protocol.
     public typealias DBModel = T
-    public typealias DB = D
+    public typealias DB = T.Database
     
     /// The database connection pool.
-    /// - seealso: `Repository` protocol.
-    public let db: D.ConnectionPool
+    /// - seealso: `FluentRepository` protocol.
+    public let db: DB.ConnectionPool
     public let pageConfig: RepositoryPaginationConfig
     
     /// - parameter db: The database connection.
-    /// - seealso: `Repository` protocol.
-    public required init<C>(_ db: C, pageConfig: RepositoryPaginationConfig) where C: DatabaseConnectionPool<ConfiguredDatabase<D>> {
+    /// - seealso: `FluentRepository` protocol.
+    public required init<C>(_ db: C, on worker: Container) throws where C: DatabaseConnectionPool<ConfiguredDatabase<DB>> {
+        
+        self.pageConfig = try worker.make(RepositoryPaginationConfig.self)
         self.db = db
-        self.pageConfig = pageConfig
     }
 }

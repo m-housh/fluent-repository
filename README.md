@@ -17,6 +17,7 @@ Register the Fluent database provider for your project.
         
         /// Register providers first.
         try services.register(FluentSQLiteProvider())
+        try services.register(FluentRepositoryProvider())
         ...
     }
 
@@ -39,7 +40,8 @@ inherit from.
         }
 
         static func makeService(for container: Container) throws -> Self {
-            return .init(try container.connectionPool(to: .sqlite)
+            let db = try container.connectionPool(to: .sqlite)
+            return .init(db, on: container)
         }
 
     }
@@ -76,6 +78,7 @@ a *BaseRepository*.
     protocol UserRepository {
         
         func all() -> Future<[User]>
+        func all(page: Int) throws -> Future<[User]>
         func find(id: Int) -> Future<User?>
         func save(_ user: User) -> Future<User>
         func delete(id: Int) -> Future<Void>
