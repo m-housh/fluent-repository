@@ -9,6 +9,7 @@ import Vapor
 import FluentSQLite
 import XCTest
 import VaporTestable
+import FluentRepositoryController
 
 @testable import FluentRepository
 
