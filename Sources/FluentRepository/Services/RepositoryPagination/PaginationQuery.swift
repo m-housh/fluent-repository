@@ -14,5 +14,5 @@ public protocol PaginationQuery: Content {
 
 
 public struct DefaultPaginationQuery: Content {
-    let page: Int?
+    public let page: Int?
 }
